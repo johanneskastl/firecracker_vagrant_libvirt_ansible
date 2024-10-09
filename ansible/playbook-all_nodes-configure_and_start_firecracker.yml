@@ -1,0 +1,81 @@
+---
+- name: 'Configure and start firecracker'
+  hosts: 'all'
+  gather_facts: true
+  become: true
+
+  vars:
+    kernel_binary_version: 'firecracker-ci/v1.10/x86_64/vmlinux-5.10.223'
+    kernel_binary_filename: 'vmlinux-5.10.223'
+    ubuntu_rootfs_filename: 'ubuntu-22.04.ext4'
+    ubuntu_sshkey_filename: 'ubuntu-22.04.id_rsa'
+
+  handlers:
+
+    - name: 'Restart the firecracker service'
+      ansible.builtin.systemd:
+        name: 'firecracker'
+        state: 'restarted'
+        daemon_reload: true
+
+  tasks:
+
+    - name: 'Create directory /var/lib/firecracker/'
+      ansible.builtin.file:
+        path: '/var/lib/firecracker/'
+        state: 'directory'
+        owner: 'root'
+        group: 'root'
+        mode: '0755'
+
+    - name: 'Download kernel binary'
+      ansible.builtin.get_url:
+        url: "https://s3.amazonaws.com/spec.ccfc.min/{{ kernel_binary_version }}"
+        dest: "/var/lib/firecracker/{{ kernel_binary_filename }}"
+        owner: 'root'
+        group: 'root'
+        mode: '0644'
+
+    - name: 'Download a Ubuntu rootfs'
+      ansible.builtin.get_url:
+        url: 'https://s3.amazonaws.com/spec.ccfc.min/firecracker-ci/v1.10/x86_64/ubuntu-22.04.ext4'
+        dest: "/var/lib/firecracker/{{ ubuntu_rootfs_filename }}"
+        owner: 'root'
+        group: 'root'
+        mode: '0644'
+
+    - name: 'Download the SSH key for the rootfs'
+      ansible.builtin.get_url:
+        url: 'https://s3.amazonaws.com/spec.ccfc.min/firecracker-ci/v1.10/x86_64/ubuntu-22.04.id_rsa'
+        dest: "/var/lib/firecracker/{{ ubuntu_sshkey_filename }}"
+        owner: 'root'
+        group: 'root'
+        mode: '0400'
+
+    - name: 'Create the systemd service file'
+      ansible.builtin.template:
+        src: 'firecracker.service.j2'
+        dest: '/etc/systemd/system/firecracker.service'
+        owner: 'root'
+        group: 'root'
+        mode: '0644'
+
+    - name: 'Start the firecracker service'
+      ansible.builtin.systemd:
+        name: 'firecracker'
+        state: 'started'
+        daemon_reload: true
+
+    - name: 'Enable the firecracker service'
+      ansible.builtin.systemd:
+        name: 'firecracker'
+        enabled: true
+        daemon_reload: true
+
+    - name: 'Create the script for a example VM'
+      ansible.builtin.template:
+        src: 'example_vm.sh.j2'
+        dest: '/var/lib/firecracker/example_vm.sh'
+        owner: 'root'
+        group: 'root'
+        mode: '0744'

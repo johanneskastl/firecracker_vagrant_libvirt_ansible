@@ -5,24 +5,24 @@ TAP_IP="172.16.0.1"
 MASK_SHORT="/30"
 
 # Setup network interface
-sudo ip link del "$TAP_DEV" 2> /dev/null || true
-sudo ip tuntap add dev "$TAP_DEV" mode tap
-sudo ip addr add "${TAP_IP}${MASK_SHORT}" dev "$TAP_DEV"
-sudo ip link set dev "$TAP_DEV" up
+ip link del "$TAP_DEV" 2> /dev/null || true
+ip tuntap add dev "$TAP_DEV" mode tap
+ip addr add "${TAP_IP}${MASK_SHORT}" dev "$TAP_DEV"
+ip link set dev "$TAP_DEV" up
 
 # Enable ip forwarding
-sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
 
 HOST_IFACE="eth0"
 
 # Set up microVM internet access
-sudo iptables -t nat -D POSTROUTING -o "$HOST_IFACE" -j MASQUERADE || true
-sudo iptables -D FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT \
+iptables -t nat -D POSTROUTING -o "$HOST_IFACE" -j MASQUERADE || true
+iptables -D FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT \
     || true
-sudo iptables -D FORWARD -i "$TAP_DEV" -o "$HOST_IFACE" -j ACCEPT || true
-sudo iptables -t nat -A POSTROUTING -o "$HOST_IFACE" -j MASQUERADE
-sudo iptables -I FORWARD 1 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-sudo iptables -I FORWARD 1 -i "$TAP_DEV" -o "$HOST_IFACE" -j ACCEPT
+iptables -D FORWARD -i "$TAP_DEV" -o "$HOST_IFACE" -j ACCEPT || true
+iptables -t nat -A POSTROUTING -o "$HOST_IFACE" -j MASQUERADE
+iptables -I FORWARD 1 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+iptables -I FORWARD 1 -i "$TAP_DEV" -o "$HOST_IFACE" -j ACCEPT
 
 API_SOCKET="/tmp/firecracker.socket"
 LOGFILE="./firecracker.log"
@@ -31,7 +31,7 @@ LOGFILE="./firecracker.log"
 touch $LOGFILE
 
 # Set log file
-sudo curl -X PUT --unix-socket "${API_SOCKET}" \
+curl -X PUT --unix-socket "${API_SOCKET}" \
     --data "{
         \"log_path\": \"${LOGFILE}\",
         \"level\": \"Debug\",
@@ -50,7 +50,7 @@ if [ "${ARCH}" = "aarch64" ]; then
 fi
 
 # Set boot source
-sudo curl -X PUT --unix-socket "${API_SOCKET}" \
+curl -X PUT --unix-socket "${API_SOCKET}" \
     --data "{
         \"kernel_image_path\": \"${KERNEL}\",
         \"boot_args\": \"${KERNEL_BOOT_ARGS}\"
@@ -60,7 +60,7 @@ sudo curl -X PUT --unix-socket "${API_SOCKET}" \
 ROOTFS="./ubuntu-22.04.ext4"
 
 # Set rootfs
-sudo curl -X PUT --unix-socket "${API_SOCKET}" \
+curl -X PUT --unix-socket "${API_SOCKET}" \
     --data "{
         \"drive_id\": \"rootfs\",
         \"path_on_host\": \"${ROOTFS}\",
@@ -75,7 +75,7 @@ sudo curl -X PUT --unix-socket "${API_SOCKET}" \
 FC_MAC="06:00:AC:10:00:02"
 
 # Set network interface
-sudo curl -X PUT --unix-socket "${API_SOCKET}" \
+curl -X PUT --unix-socket "${API_SOCKET}" \
     --data "{
         \"iface_id\": \"net1\",
         \"guest_mac\": \"$FC_MAC\",
@@ -88,7 +88,7 @@ sudo curl -X PUT --unix-socket "${API_SOCKET}" \
 sleep 0.015s
 
 # Start microVM
-sudo curl -X PUT --unix-socket "${API_SOCKET}" \
+curl -X PUT --unix-socket "${API_SOCKET}" \
     --data "{
         \"action_type\": \"InstanceStart\"
     }" \

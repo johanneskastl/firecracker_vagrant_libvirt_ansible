@@ -24,6 +24,12 @@
         state: 'restarted'
       become: true
 
+    - name: 'Restart the systemd-sysctl.service'
+      ansible.builtin.service:
+        name: 'systemd-sysctl.service'
+        state: 'restarted'
+      become: true
+
   tasks:
 
     - name: 'Create /etc/modules-load.d/ip_tables.conf'
@@ -37,6 +43,18 @@
       become: true
       notify:
         - 'Restart the systemd-modules-load.service'
+
+    - name: 'Create /etc/sysctl.d/net.ipv4.ip_forward.conf'
+      ansible.builtin.copy:
+        dest: '/etc/sysctl.d/net.ipv4.ip_forward.conf'
+        content: |
+          net.ipv4.ip_forward = 1
+        owner: 'root'
+        group: 'root'
+        mode: '0644'
+      become: true
+      notify:
+        - 'Restart the systemd-sysctl.service'
 
     - name: 'Create directory /var/lib/firecracker/'
       ansible.builtin.file:

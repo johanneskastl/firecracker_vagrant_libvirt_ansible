@@ -9,3 +9,5 @@
       packages_to_be_installed:
         - firecracker
         - firectl
+        - iptables
+        - curl

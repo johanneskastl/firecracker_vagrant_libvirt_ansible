@@ -18,9 +18,9 @@
         state: 'restarted'
         daemon_reload: true
 
-    - name: 'Restart the wickedd-nanny service'
+    - name: 'Restart the network service'
       ansible.builtin.systemd:
-        name: 'wickedd-nanny'
+        name: 'network'
         state: 'restarted'
 
     - name: 'Restart the systemd-modules-load.service'
@@ -69,7 +69,7 @@
         group: 'root'
         mode: '0644'
       notify:
-        - 'Restart the wickedd-nanny service'
+        - 'Restart the network service'
 
     - name: 'Flush handlers so everything is prepared'
       ansible.builtin.meta: flush_handlers

@@ -18,6 +18,11 @@
         state: 'restarted'
         daemon_reload: true
 
+    - name: 'Restart the wickedd-nanny service'
+      ansible.builtin.systemd:
+        name: 'wickedd-nanny'
+        state: 'restarted'
+
     - name: 'Restart the systemd-modules-load.service'
       ansible.builtin.service:
         name: 'systemd-modules-load.service'
@@ -55,6 +60,20 @@
       become: true
       notify:
         - 'Restart the systemd-sysctl.service'
+
+    - name: 'Create the ifcfg-tap0 file'
+      ansible.builtin.template:
+        src: 'ifcfg-tap0.j2'
+        dest: '/etc/sysconfig/network/ifcfg-tap0'
+        owner: 'root'
+        group: 'root'
+        mode: '0644'
+      notify:
+        - 'Restart the wickedd-nanny service'
+
+    #
+    # firecracker
+    #
 
     - name: 'Create directory /var/lib/firecracker/'
       ansible.builtin.file:

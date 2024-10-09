@@ -71,6 +71,9 @@
       notify:
         - 'Restart the wickedd-nanny service'
 
+    - name: 'Flush handlers so everything is prepared'
+      ansible.builtin.meta: flush_handlers
+
     #
     # firecracker
     #

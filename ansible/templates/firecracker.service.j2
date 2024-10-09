@@ -1,0 +1,9 @@
+[Unit]
+Description=Firecracker
+
+[Service]
+ExecStart=/usr/bin/firecracker --api-sock /run/firecracker/firecracker.socket
+WorkingDirectory=/var/lib/firecracker/
+
+[Install]
+WantedBy=multi-user.target
